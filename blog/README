@@ -1,0 +1,4 @@
+1.pygment没有安装成功，Markdown高亮显示失败，后续完成
+2.ModelForm需要看一下
+3.导入模块尽量用. ..方式，如form .models import views
+4.外键的反向查询

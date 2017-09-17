@@ -1,0 +1,162 @@
+from django.shortcuts import render, HttpResponse, get_object_or_404
+from comments.forms import CommentForm
+from .models import Post, Category
+import markdown
+from django.views.generic import ListView,DetailView
+
+
+# Create your views here.
+class IndexView(ListView):
+    # 告诉django我要获取的 模型是Post
+    model = Post
+    # 指定这个视图渲染的模板
+    template_name = 'blog/index.html'
+    # 指定获取的模型列表数据保存的变量名，这个变量会被传递给模板
+    context_object_name = 'post_list'
+    # 指定paginate_by 属性后开启分页功能，其值代表每一页包含多少篇文章
+    paginate_by = 1
+
+    def get_context_data(self, **kwargs):
+        """
+        再视图函数中将模板变量传递给模板是通过给render函数的context参数传递一个字典实现的，
+        例如render（request，‘blog/index。html’，context={‘ppost_list’：post_list}），
+        在这里传递了一个{}字典给模板。
+        在类视图中，这个需要传递的模板变量字典是通过get_context_data获得的，
+        所以我们复写该方法，以便我们能够自己再插入一些我们自定义的模板变量进去。
+        """    
+        
+        # 首先获得父类生成的传递给模板的字典
+        context = super().get_context_data(**kwargs)
+        # 父类生成的字典中已经有paginator、page_obj、is_paginated这三个模板变量，
+        # paginator是Paginator的一个实例，
+        # page_obj是Page的一个实例，
+        # is_paginated是一个布尔变量，用户指示是否已分页。
+        # 例如如果规定每页10个数据，而本身只有5个数据，其实就用不着分页，此时is_paginated=False。
+        # 关于什么是Paginator，Page类在Django Pagination简单分页中已有详细说明。
+        # 由于context是一个字典，所以调用get方法从中取出某个键对应的值。
+        paginator = context.get('paginator')
+        page = context.get('page_obj')
+        is_paginated = context.get('is_paginated')
+
+        # 调用自己写的pagination_data 方法获取显示分页导航条需要的数据，见下方。
+        pagination_data = self.pagination_data(paginator, page, is_paginated)
+
+        # 将分页导航条的模板变量更新到context中，注意pagination_data方法返回的也是一个字典。
+        context.update(pagination_data)
+        return context
+
+def pagination_data(self, paginator, page, is_paginated):
+    if not is_paginated:
+        # 如果
+        return {}
+    # 当前页左边连续的页码，初始值为空
+    left = []
+    # 当前页右边连续的页码号，初始值为空
+    right = []
+
+    # 标示第一页页码后是否需要显示省略号
+    left_has_more = False
+
+    # 标示最后一页页码前是否显示省略号
+    right_has_more = False
+
+    
+    # 标示是否需要显示第一页的页码号
+    # 因为如果当前页左边的连续页码号中已经含有第一页的页码号，此时就无需再显示第一页的页码号，
+    # 其它情况下第一页的页码是始终要显示的。
+    # 初始值为False
+    first = False
+
+    # 标示是否需要显示最后一页的页码
+    # 需要此指示变量的理由和上面相同 
+    last = False
+
+    # 获取当前用户请求的页码号
+    page_number = page.number
+
+    # 获得分页后的总页数
+    total_pages = paginator.num_pages
+   
+    # 获取整个分页页码列表，比如分了四页，那么就是【1, 2, 3, 4】
+    page_range = paginator.page_range
+
+    if page_number == 1:
+        right = page_range[page_number:page_number + 2]
+
+        if right[-1] < total_page -1:
+            right_has_more = True
+
+        if right[-1] < total_pages:
+            right_has_more = True
+    elif page_number == total_pages:
+        left = page_rangep[(page_number -3) if (page_number -3) >0 else 0:page_number -1]
+        if left[0] >2:
+            left_has_more = True
+
+        if left[0] >1:
+            first = True
+    else:
+        left = page_range[(page_number -3) if (page_number -3) >0 else 0:page_number -1]
+        right = page_range[page_number:page_number + 2]
+
+        if right[-1] < total_pages -1:
+            right_has_more = True
+        if right[-1] < total_pages:
+            last = True
+
+        if left[0] >2:
+            left_has_more = True
+        if left[0] >1:
+            first = True
+
+    data = {
+        'left': left,
+        'right': right,
+        'left_has_more': left_has_more,
+        'right_has_more': right_has_more,
+        'first': first,
+        'last': last,
+    }
+    
+    return data
+
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'blog/detail.html'
+    context_object_name = 'post'
+
+    def get(self, request, *args, **kwargs):
+        response = super(PostDetailView, self).get(request, *args, **kwargs)
+        self.object.increase_views()
+
+        return response
+
+    def get_object(self, queryset=None):
+        post = super(PostDetailView, self).get_object(queryset=None)
+        post.body = markdown.markdown(post.body, extensions[
+                                                           'markdown.extensions.extra',
+                                                           'markdown.extensions.codehilite',
+                                                           'markdown.extensions.toc',
+                                                           ])
+        return post
+      
+    def get_context_data(self, **kwargs):
+        context = super(PostDetailView, self).get_context_data(**kwargs)
+        form = CommentForm()
+        comment_list = self.object.comment_set.all()
+        context.update({
+            'form': form,
+            'comment_list': comment_list})
+        return context
+
+class ArchivesView(IndexView):
+    def get_queryset(self):
+        year = self.kwargs.get('year')
+        month = self.kwargs.get('month')
+        return super(ArchivesView, self).get_queryset().filter(create_time__year=year,
+                                                               create_time__month=month)
+
+class CategoryView(IndexView):
+    def get_queryset(self):
+        cate = get_object_or_404(Category, pk=self.kwargs.get('pk'))
+        return super(CategoryView, self).get_queryset().filter(category=cate)
