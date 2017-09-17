@@ -4,6 +4,8 @@
 from django.conf.urls import url
 from . import views
 from .feeds import AllPostsRssFeed
+from django.views.static import serve
+from blogproject import settings
 
 # 加入app_name可以让程序知道命名空间，找到blog位置
 app_name = 'blog'
@@ -19,4 +21,7 @@ urlpatterns = [
     url(r'^tag/(?P<pk>[0-9]+)/$', views.TagView.as_view(), name='tag'),
     url(r'^all/rss/$', AllPostsRssFeed(), name='rss'),
     url(r'^admin/$', views.admin, name='admin'),
+    url(r'^about/$', views.about, name='about'),
+    url(r'^admin/upload/(?P<dir_name>[^/]+)$', views.upload_image, name='upload_image'),
+    url(r'^upload/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT,}),
 ]

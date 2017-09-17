@@ -3,7 +3,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Black &amp; White</title>
+    {% block title %}
+        <title>Linuxliu的个人博客</title>
+    {% endblock %}
     <style>
         span.highlighted{
             color:red;
@@ -33,7 +35,7 @@
         <div class="row">
             <div class="col-md-4 col-sm-5 col-xs-8">
                 <div class="logo">
-                    <h1><a href="{% url 'blog:index' %}"><b>Black</b> &amp; White</a></h1>
+                    <h1><a href="{% url 'blog:index' %}"><b>Linuxliu个人博客</b></a></h1>
                 </div>
             </div><!-- col-md-4 -->
             <div class="col-md-8 col-sm-7 col-xs-4">
@@ -47,9 +49,9 @@
                     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                         <ul class="nav navbar-nav navbar-right">
                             <li class="cl-effect-11"><a href="{% url 'blog:index' %}" data-hover="首页">首页</a></li>
-                            <li class="cl-effect-11"><a href="#" data-hover="博客">博客</a></li>
-                            <li class="cl-effect-11"><a href="#" data-hover="关于">关于</a></li>
-                            <li class="cl-effect-11"><a href="{% url 'blog:admin' %}" data-hover="管理登陆">管理登陆</a></li>
+                            <!--li class="cl-effect-11"><a href="#" data-hover="博客">博客</a></li-->
+                            <li class="cl-effect-11"><a href="{% url 'blog:about' %}" data-hover="关于">关于</a></li>
+                            <li class="cl-effect-11"><a href="{% url 'blog:admin' %}" data-hover="管理">管理</a></li>
                         </ul>
                     </div><!-- /.navbar-collapse -->
                 </nav>
@@ -68,7 +70,6 @@
 </div>
 <div class="copyrights">Collect from <a href="http://www.cssmoban.com/">网页模板</a></div>
 <div class="copyrights">Modified by <a href="http://zmrenwu.com/">追梦人物的博客</a></div>
-
 <div class="content-body">
     <div class="container">
         <div class="row">
